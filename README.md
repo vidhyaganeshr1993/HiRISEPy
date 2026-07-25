@@ -34,7 +34,7 @@ The pipeline provides:
 The processing chain follows:
 
 ```
-HiRISE COLOR4 image
+HiRISE UNFILTERED images
         |
         v
 Image and metadata ingestion
