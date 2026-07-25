@@ -185,7 +185,7 @@ Batch processing automatically:
 
 # Quality Control and Failure Handling
 
-The pipeline performs validation checks before applying dark subtraction correction.
+The pipeline performs validation checks before applying a dark subtraction correction.
 
 If physically invalid dark minima values are detected:
 
@@ -228,8 +228,6 @@ Required packages include:
 - spectral
 - pillow
 
-An environment file (`environment.yml`) is provided for reproducible installation.
-
 ---
 
 # Running the Pipeline
@@ -247,7 +245,7 @@ python-processing
 2. Open:
 
 ```
-Run_HiRISE_Processing.ipynb
+HiRISE_unfiltered_data processing pipeline_run.ipynb
 ```
 
 3. Define input/output locations:
