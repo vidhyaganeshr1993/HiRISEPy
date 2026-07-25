@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Generated ENVI products
+*.img
+*.hdr
+
+# Generated QC products
+*.png
+
+# Processing outputs
+data/input/
+data/qc/
+data/corrected/
+
+# CSV summaries
+batch_summary.csv
