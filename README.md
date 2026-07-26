@@ -512,6 +512,10 @@ This approach provides:
 
 If you use this software or methodology in scientific work, please cite:
 
+Software: 
+Rangarajan, V.G. (2026). HiRISEPy: A Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data. 
+
+Methodology: 
 Rangarajan, V.G., Tornabene, L.L., Osinski, G.R., Dundas, C.M., Beyer, R.A., Herkenhoff, K.E., Byrne, S., Heyd, R., Seelos, F.P., Munaretto, G., Dapremont, A., (2024). Novel quantitative methods to enable multispectral identification of high-purity water ice exposures on Mars using High Resolution Imaging Science Experiment (HiRISE) images. Icarus, 419, 115849. https://doi.org/10.1016/j.icarus.2023.115849
 
 ---
