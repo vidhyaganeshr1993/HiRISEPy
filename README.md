@@ -273,7 +273,7 @@ python-processing
 2. Open the provided Jupyter notebook:
 
 ```
-HiRISE_unfiltered_data processing pipeline_run.ipynb
+Run_HiRISE_Processing.ipynb
 ```
 
 3. Define input/output locations:
