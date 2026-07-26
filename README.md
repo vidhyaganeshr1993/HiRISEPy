@@ -1,4 +1,4 @@
-# HiRISE Unfiltered Multispectral Cube Processing Pipeline
+# hirisepy: Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data
 
 ## Overview
 
@@ -10,7 +10,13 @@ The processing methodology, including detailed descriptions of the dark subtract
 
 Rangarajan, V.G., Tornabene, L.L., Osinski, G.R., Dundas, C.M., Beyer, R.A., Herkenhoff, K.E., Byrne, S., Heyd, R., Seelos, F.P., Munaretto, G., Dapremont, A., 2024. Novel quantitative methods to enable multispectral identification of high-purity water ice exposures on Mars using High Resolution Imaging Science Experiment (HiRISE) images. Icarus, 419, 115849. https://doi.org/10.1016/j.icarus.2023.115849 
 
-This pipeline requires input of UNFILTERED HiRISE COLOR products converted to .tif using GDAL. The detailed procedure for generating UNFILTERED HiRISE ISIS cubes as well as their conversion to .tif is provided in the supplementary material in Rangarajan et al. (2024).
+## Scientific Background
+
+HiRISE COLOR observations provide three-channel visible-near infrared measurements of the Martian surface. However, quantitative spectral analysis requires careful treatment of band and scene-dependent effects due to atmospheric scattering.
+
+hirisepy implements a dark subtraction correction approach designed to mitigate effects of atmospheric scattering using the darkest measurable pixels within each observation. The corrected products preserve the original calibrated radiometric information while improving our estimation of surface spectral behaviour.
+
+The software is intended for users performing quantitative analysis of HiRISE multispectral observations rather than simple image visualization.
 
 ---
 
@@ -18,15 +24,35 @@ This pipeline requires input of UNFILTERED HiRISE COLOR products converted to .t
 
 The pipeline provides:
 
-- Automated HiRISE UNFILTERED product ingestion
-- Dark pixel identification
+HiRISEpy provides:
+
+## Data Processing
+
+- Automated ingestion of HiRISE UNFILTERED COLOR observations
+- Metadata extraction from input products
+- Invalid pixel masking
+- Automated dark pixel identification
 - Dark subtraction correction
-- Quality control visualization products
 - Multispectral band reordering
 - ENVI-compatible output generation
-- Batch processing of multiple HiRISE observations
-- Automated processing summaries and failure reporting
 
+## Quality Assessment
+
+Generation of diagnostic products including:
+
+- dark pixel location maps
+- correction validation plots
+- before/after spectral comparisons
+- processing summaries
+- batch failure reports
+
+## Batch Processing
+
+The package supports automated processing of large observation inventories by:
+
+- processing observations sequentially
+- generating standardized outputs
+- recording processing success/failure status
 ---
 
 # Processing Workflow
@@ -34,7 +60,7 @@ The pipeline provides:
 The processing chain follows:
 
 ```
-HiRISE UNFILTERED images
+HiRISE UNFILTERED COLOR observation
         |
         v
 Image and metadata ingestion
@@ -52,25 +78,28 @@ Dark subtraction correction
 Quality control assessment
         |
         v
-Band ordering correction
+Band re-ordering
         |
         v
-ENVI product generation
+ENVI compatible output generation
 ```
 
 ---
 
-# Input Data
+# Supported Input Data
 
-The pipeline accepts HiRISE UNFILTERED products in TIF format.
+hirisepy currently requires:
+
+NASA MRO HiRISE UNFILTERED COLOR products
+ISIS-processed HiRISE Unfiltered cubes converted to TIFF format using GDAL
 
 Example:
 
-```
 ESP_053039_1640_UNFILTERED_COLOR4.tif
-```
 
-Native HiRISE COLOR4 detector ordering:
+The procedure for generating ISIS UNFILTERED products and converting them to TIFF format is described in the supplementary material of Rangarajan et al. (2024).
+
+## Native HiRISE products detector band ordering:
 
 | Native band | Detector channel |
 |---|---|
@@ -100,7 +129,6 @@ ESP_053039_1640_dark_QC.png
 
 ESP_053039_1640_DS_QC.png
 ```
-
 ---
 
 ## Dark Subtraction Corrected ENVI Products
@@ -244,7 +272,7 @@ Example workflow:
 python-processing
 ```
 
-2. Open:
+2. Open the provided Jupyter notebook:
 
 ```
 Run_HiRISE_Processing.ipynb
@@ -288,6 +316,199 @@ HiRISE_Python/
 ```
 
 ---
+
+# Software Architecture
+
+HiRISEpy is organized into modular Python components, with each module responsible for a specific stage of the processing workflow.
+
+## Module Description
+
+### `pipeline.py`
+
+Core processing workflow module.
+
+This module defines the primary HiRISE processing pipeline and coordinates the sequential execution of individual processing steps:
+
+- Input image loading
+- Metadata extraction
+- Invalid pixel masking
+- Dark pixel identification
+- Dark subtraction correction
+- Band reordering
+- Output generation
+- Quality control product creation
+
+The pipeline module provides the main interface for processing individual HiRISE observations.
+
+
+---
+
+### `batch.py`
+
+Batch processing and automation module.
+
+This module enables processing of multiple HiRISE observations without manual intervention.
+
+Functions include:
+
+- Iterating through directories containing HiRISE observations
+- Executing the processing pipeline for each observation
+- Generating standardized outputs
+- Recording successful and failed processing attempts
+- Producing processing summaries
+
+This module is designed for large-scale processing campaigns involving multiple HiRISE observations.
+
+
+---
+
+### `dark_correction.py`
+
+Dark subtraction correction module.
+
+This module implements the radiometric correction methodology described in Rangarajan et al. (2024).
+
+Functions include:
+
+- Applying dark subtraction correction for each band
+- Estimating dark signal contributions
+- Generating corrected multispectral products
+- Supporting before/after correction validation
+
+The correction preserves the calibrated HiRISE radiometric information while reducing detector-dependent offsets.
+
+
+---
+
+### `dark_pixels.py`
+
+Dark pixel identification module.
+
+This module identifies candidate dark pixels within HiRISE observations for use in dark subtraction correction.
+
+Functions include:
+
+- Searching individual detector channels
+- Identifying minimum radiance/I/F locations
+- Recording pixel coordinates and values
+- Providing dark pixel statistics for quality assessment
+
+
+---
+
+### `masking.py`
+
+Invalid pixel handling module.
+
+This module manages invalid or unusable pixels during processing.
+
+Functions include:
+
+- Identifying NoData regions
+- Applying invalid pixel masks
+- Preventing corrupted pixels from influencing correction calculations
+- Maintaining NaN-based internal data representation
+
+
+---
+
+### `metadata.py`
+
+HiRISE metadata extraction module.
+
+This module extracts and stores observation-level metadata required for processing and interpretation.
+
+Information includes:
+
+- Observation identifiers
+- Image dimensions
+- Number of spectral bands
+- Band descriptions
+- Wavelength information
+
+
+---
+
+### `band_stacking.py`
+
+Multispectral band organization module.
+
+This module manages HiRISE COLOR band ordering and creates analysis-ready multispectral data products.
+
+Functions include:
+
+- Correcting native detector ordering
+- Rearranging bands into spectral interpretation order
+- Generating stacked multispectral arrays
+
+
+---
+
+### `envi_io.py`
+
+ENVI input/output module.
+
+This module provides functions for reading and writing ENVI-compatible products.
+
+Functions include:
+
+- Generating ENVI `.hdr` metadata files
+- Exporting corrected image cubes
+- Maintaining wavelength information
+- Preserving NoData definitions
+
+Generated products are compatible with ENVI, QGIS, and other planetary remote sensing software.
+
+
+---
+
+### `visualization.py`
+
+Quality control and visualization module.
+
+This module generates diagnostic products used for evaluating processing performance.
+
+Functions include:
+
+- HiRISE false-colour image generation
+- Contrast stretching for visualization
+- Dark pixel location visualization
+- Spectral plotting
+- Before/after correction comparisons
+- Automated QC report generation
+
+All visualization operations are independent of the scientific pixel values and do not modify the underlying calibrated data.
+
+
+---
+
+### `io.py`
+
+General input/output utility module.
+
+This module provides supporting functions for:
+
+- File handling
+- Data loading utilities
+- Directory management
+- Common processing operations shared across modules
+
+
+---
+
+# Development Philosophy
+
+HiRISEpy follows a modular design where individual processing steps are separated into independent components.
+
+This approach provides:
+
+- Improved reproducibility
+- Easier maintenance
+- Transparent scientific workflows
+- Simplified extension for future HiRISE processing applications
+
+---
+
 
 # Citation
 

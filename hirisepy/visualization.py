@@ -1,22 +1,61 @@
+import os
 import numpy as np
-import matplotlib as plt
 
-def local_stretch(image, lower=2, upper=98):
+
+# ============================================================
+# Image stretching utilities
+# ============================================================
+
+def linear_stretch(
+    image,
+    low=0.5,
+    high=99.5
+):
     """
-    Apply percentile stretch for visualization.
+    Apply percentile-based linear contrast stretch.
+
+    Parameters
+    ----------
+    image : ndarray
+        Image array.
+
+    low : float
+        Lower percentile.
+
+    high : float
+        Upper percentile.
+
+    Returns
+    -------
+    stretched : ndarray
+        Image scaled between 0 and 1.
+
+    Notes
+    -----
+    This is a visualization-only operation.
+    Scientific pixel values are not modified.
     """
 
-    import numpy as np
+    valid = image[np.isfinite(image)]
 
-    vmin = np.nanpercentile(
-        image,
-        lower
+    if valid.size == 0:
+        return image.astype(np.float32)
+
+    vmin = np.percentile(
+        valid,
+        low
     )
 
-    vmax = np.nanpercentile(
-        image,
-        upper
+    vmax = np.percentile(
+        valid,
+        high
     )
+
+    if vmax == vmin:
+        return np.zeros_like(
+            image,
+            dtype=np.float32
+        )
 
     stretched = (
         image - vmin
@@ -30,58 +69,84 @@ def local_stretch(image, lower=2, upper=98):
         1
     )
 
-    return stretched
+    return stretched.astype(
+        np.float32
+    )
 
-def stretch_band(band, low=2, high=98):
+
+# ============================================================
+# Band stretching
+# ============================================================
+
+def stretch_band(
+    band,
+    low=0.5,
+    high=99.5
+):
     """
-    Percentile stretch for visualization.
+    Apply linear stretch to a single HiRISE band.
 
     Parameters
     ----------
     band : ndarray
-        Single image band
+        Single image band.
 
     low : float
-        Lower percentile
+        Lower percentile.
 
     high : float
-        Upper percentile
+        Upper percentile.
 
     Returns
     -------
-    stretched : ndarray
-        Values scaled between 0 and 1
+    ndarray
+        Stretched band scaled between 0 and 1.
     """
 
-    valid = band[np.isfinite(band)]
-
-    vmin = np.percentile(valid, low)
-    vmax = np.percentile(valid, high)
-
-    stretched = (band - vmin) / (vmax - vmin)
-
-    stretched = np.clip(
-        stretched,
-        0,
-        1
+    return linear_stretch(
+        band,
+        low,
+        high
     )
 
-    return stretched.astype(np.float32)
-    
-def make_irb(image):
+
+# ============================================================
+# IRB false colour generation
+# ============================================================
+
+def make_irb(
+    image
+):
     """
     Create IRB false colour composite.
+
+    HiRISE COLOR band order:
+
+    Band 1 = NearInfrared
+    Band 2 = Red
+    Band 3 = BlueGreen
+
+    Display order:
 
     R = NearInfrared
     G = Red
     B = BlueGreen
+
+    A 0.5% linear stretch is applied
+    independently to each band.
     """
 
-    nir = stretch_band(image[0])
+    nir = stretch_band(
+        image[0]
+    )
 
-    red = stretch_band(image[1])
+    red = stretch_band(
+        image[1]
+    )
 
-    blue_green = stretch_band(image[2])
+    blue_green = stretch_band(
+        image[2]
+    )
 
     irb = np.dstack(
         [
@@ -92,36 +157,58 @@ def make_irb(image):
     )
 
     return irb
-    
-def show_image(image, title=None, figsize=(10, 8)):
+
+
+# ============================================================
+# Basic image display
+# ============================================================
+
+def show_image(
+    image,
+    title=None,
+    figsize=(10, 8)
+):
     """
-    Display an image with consistent formatting.
+    Display image.
 
     Parameters
     ----------
     image : ndarray
-        Image array
+        Image array.
 
     title : str
-        Plot title
+        Optional title.
 
     figsize : tuple
-        Figure size
+        Figure size.
     """
 
     import matplotlib.pyplot as plt
 
-    plt.figure(figsize=figsize)
+    plt.figure(
+        figsize=figsize
+    )
 
-    plt.imshow(image)
+    plt.imshow(
+        image
+    )
 
     if title is not None:
-        plt.title(title)
+        plt.title(
+            title
+        )
 
-    plt.axis("off")
+    plt.axis(
+        "off"
+    )
 
     plt.show()
-    
+
+
+# ============================================================
+# ROI plotting
+# ============================================================
+
 def plot_rois(
     image,
     rois,
@@ -130,29 +217,31 @@ def plot_rois(
     title="ROI locations"
 ):
     """
-    Plot ROI locations on an image.
+    Plot ROI locations on image.
 
     Parameters
     ----------
     image : ndarray
-        RGB/IRB image
+        RGB/IRB image.
 
     rois : dict
         Dictionary:
         {"ROI_name": (row, column)}
 
     colors : dict
-        Dictionary:
-        {"ROI_name": "color"}
-
+        Optional colours.
     """
 
     import matplotlib.pyplot as plt
 
 
-    plt.figure(figsize=(10,8))
+    plt.figure(
+        figsize=(10, 8)
+    )
 
-    plt.imshow(image)
+    plt.imshow(
+        image
+    )
 
 
     for name, (row, col) in rois.items():
@@ -174,42 +263,54 @@ def plot_rois(
 
     plt.legend()
 
-    plt.title(title)
+    plt.title(
+        title
+    )
 
-    plt.axis("off")
+    plt.axis(
+        "off"
+    )
 
     plt.show()
-    
+
+
+# ============================================================
+# Dark pixel spectra
+# ============================================================
+
 def plot_dark_spectra(
     spectra
 ):
     """
-    Plot I/F spectra extracted from darkest pixel locations.
+    Plot dark pixel I/F spectra.
 
-    HiRISE COLOR band order:
-    Band 1 = NearInfrared  (873.403381 nm)
-    Band 2 = Red           (691.897644 nm)
-    Band 3 = BlueGreen     (502.560150 nm)
+    HiRISE COLOR order:
 
-    Spectra are reordered for plotting:
+    Band 1 = NearInfrared
+    Band 2 = Red
+    Band 3 = BlueGreen
+
+    Plot order:
+
     BlueGreen -> Red -> NearInfrared
     """
 
     import matplotlib.pyplot as plt
-    import numpy as np
 
 
-    wavelengths = np.array([
-        502.560150,
-        691.897644,
-        873.403381
-    ])
+    wavelengths = np.array(
+        [
+            502.560150,
+            691.897644,
+            873.403381
+        ]
+    )
 
 
     band_order = [
-        2,  # BlueGreen
-        1,  # Red
-        0   # NearInfrared
+        2,
+        1,
+        0
     ]
 
 
@@ -236,7 +337,9 @@ def plot_dark_spectra(
 
         values = data["values"]
 
-        ordered_values = values[band_order]
+        ordered_values = values[
+            band_order
+        ]
 
 
         plt.plot(
@@ -265,7 +368,11 @@ def plot_dark_spectra(
     plt.grid()
 
     plt.show()
-    
+
+# ============================================================
+# Dark pixel zoom visualization
+# ============================================================
+
 def plot_dark_pixel_zoom_irb(
     irb,
     dark_locations,
@@ -274,18 +381,7 @@ def plot_dark_pixel_zoom_irb(
     """
     Plot zoomed IRB regions around darkest pixels.
 
-    Parameters
-    ----------
-    irb : ndarray
-        IRB image
-        Shape:
-        (rows, columns, 3)
-
-    dark_locations : dict
-        Output from find_dark_pixels()
-
-    window_size : int
-        Size of zoom window
+    ROI zooms use local 0.5% linear stretch.
     """
 
     import matplotlib.pyplot as plt
@@ -343,13 +439,20 @@ def plot_dark_pixel_zoom_irb(
         ]
 
 
+        crop_stretched = linear_stretch(
+            crop,
+            low=0.5,
+            high=99.5
+        )
+
+
         plt.figure(
             figsize=(6,6)
         )
 
 
         plt.imshow(
-            crop
+            crop_stretched
         )
 
 
@@ -366,15 +469,24 @@ def plot_dark_pixel_zoom_irb(
         plt.title(
             f"{names[band_name]}\n"
             f"Row={row}, Col={col}\n"
-            f"I/F={value:.6f}"
+            f"I/F={value:.6f}\n"
+            "(0.5% linear stretch)"
         )
 
 
-        plt.axis("off")
+        plt.axis(
+            "off"
+        )
 
 
         plt.show()
-        
+
+
+
+# ============================================================
+# Dark pixel QC report
+# ============================================================
+
 def create_dark_pixel_qc_report(
     irb,
     masked_image,
@@ -385,40 +497,20 @@ def create_dark_pixel_qc_report(
     window_size=100
 ):
     """
-    Create and optionally save a HiRISE dark pixel QC report.
+    Create HiRISE dark pixel QC report.
 
     Includes:
-    - Full IRB image with dark pixel locations
-    - Zoomed IRB views
-    - Dark pixel I/F spectra
+
+    - Full IRB image
+    - Dark pixel locations
+    - ROI zooms
+    - Dark pixel spectra
     - Summary table
 
-    Parameters
-    ----------
-    irb : ndarray
-        IRB composite image
-
-    masked_image : ndarray
-        Masked HiRISE image cube
-
-    dark_locations : dict
-        Output from find_dark_pixels()
-
-    dark_spectra : dict
-        Output from extract_dark_spectra()
-
-    filename : str
-        Original input filename
-
-    qc_directory : str
-        Directory where QC PNG will be saved
-
-    window_size : int
-        Size of zoom window
+    All image panels use 0.5% linear stretch.
     """
 
     import matplotlib.pyplot as plt
-    import os
 
 
     colors = {
@@ -435,11 +527,8 @@ def create_dark_pixel_qc_report(
     }
 
 
-    # ---------------------------------
-    # Create automatic save path
-    # ---------------------------------
-
     save_path = None
+
 
     if filename is not None and qc_directory is not None:
 
@@ -452,24 +541,21 @@ def create_dark_pixel_qc_report(
             os.path.basename(filename)
         )[0]
 
+
         save_path = os.path.join(
             qc_directory,
             base + "_dark_pixel_QC.png"
         )
 
 
-    # ---------------------------------
-    # Create figure
-    # ---------------------------------
-
     fig = plt.figure(
         figsize=(15,14)
     )
 
 
-    # ---------------------------------
-    # Full IRB image
-    # ---------------------------------
+    # -----------------------------
+    # Full IRB
+    # -----------------------------
 
     ax1 = plt.subplot2grid(
         (4,3),
@@ -478,7 +564,11 @@ def create_dark_pixel_qc_report(
     )
 
 
-    ax1.imshow(irb)
+    ax1.imshow(
+        linear_stretch(
+            irb
+        )
+    )
 
 
     for band_name, loc in dark_locations.items():
@@ -495,17 +585,19 @@ def create_dark_pixel_qc_report(
 
 
     ax1.set_title(
-        "HiRISE IRB Image - Dark Pixel Locations"
+        "HiRISE IRB Image - Dark Pixel Locations\n(0.5% linear stretch)"
     )
 
     ax1.legend()
 
-    ax1.axis("off")
+    ax1.axis(
+        "off"
+    )
 
 
-    # ---------------------------------
-    # IRB zoom panels
-    # ---------------------------------
+    # -----------------------------
+    # ROI zoom panels
+    # -----------------------------
 
     for i, (band_name, loc) in enumerate(
         dark_locations.items()
@@ -524,64 +616,48 @@ def create_dark_pixel_qc_report(
         half = window_size // 2
 
 
-        row_min = max(
-            row-half,
-            0
-        )
-
-        row_max = min(
-            row+half,
-            irb.shape[0]
-        )
-
-
-        col_min = max(
-            col-half,
-            0
-        )
-
-        col_max = min(
-            col+half,
-            irb.shape[1]
-        )
-
-
         crop = irb[
-            row_min:row_max,
-            col_min:col_max
+            max(row-half,0):
+            min(row+half, irb.shape[0]),
+
+            max(col-half,0):
+            min(col+half, irb.shape[1])
         ]
 
 
-        crop_stretched = local_stretch(
-            crop
-        )
-
-
         ax.imshow(
-            crop_stretched
+            linear_stretch(
+                crop
+            )
         )
 
+        # Position of dark pixel inside the cropped image
+        marker_row = row - max(row-half, 0)
+        marker_col = col - max(col-half, 0)
 
         ax.scatter(
-            col-col_min,
-            row-row_min,
+            marker_col,
+            marker_row,
             s=100,
             marker="x",
             linewidths=3,
             c=colors[band_name]
         )
 
-
         ax.set_title(
-            labels[band_name] + "\n(local stretch)"
+            labels[band_name] +
+            "\n(0.5% linear stretch)"
         )
 
-        ax.axis("off")
+
+        ax.axis(
+            "off"
+        )
 
 
-    # ---------------------------------
-    # Spectrum plot
-    # ---------------------------------
+    # -----------------------------
+    # Spectrum
+    # -----------------------------
 
     ax3 = plt.subplot2grid(
         (4,3),
@@ -632,9 +708,9 @@ def create_dark_pixel_qc_report(
     ax3.legend()
 
 
-    # ---------------------------------
+    # -----------------------------
     # Summary table
-    # ---------------------------------
+    # -----------------------------
 
     ax4 = plt.subplot2grid(
         (4,3),
@@ -642,7 +718,9 @@ def create_dark_pixel_qc_report(
         colspan=3
     )
 
-    ax4.axis("off")
+    ax4.axis(
+        "off"
+    )
 
 
     table_data = []
@@ -686,10 +764,6 @@ def create_dark_pixel_qc_report(
     plt.tight_layout()
 
 
-    # ---------------------------------
-    # Save QC figure
-    # ---------------------------------
-
     if save_path is not None:
 
         plt.savefig(
@@ -704,7 +778,13 @@ def create_dark_pixel_qc_report(
 
 
     plt.show()
-    
+
+
+
+# ============================================================
+# Dark correction QC report
+# ============================================================
+
 def create_dark_correction_qc_report(
     irb_before,
     irb_after,
@@ -715,64 +795,64 @@ def create_dark_correction_qc_report(
     qc_directory
 ):
 
-    import os
     import matplotlib.pyplot as plt
-    import numpy as np
 
 
     fig = plt.figure(
-        figsize=(14, 10)
+        figsize=(14,10)
     )
 
 
-    # -----------------------------
-    # Original IRB
-    # -----------------------------
-
-    ax1 = plt.subplot(2, 2, 1)
+    ax1 = plt.subplot(
+        2,
+        2,
+        1
+    )
 
     ax1.imshow(
-        irb_before
+        linear_stretch(irb_before)
     )
 
     ax1.set_title(
-        "Original IRB"
+        "Original IRB\n(0.5% linear stretch)"
     )
 
-    ax1.axis("off")
+    ax1.axis(
+        "off"
+    )
 
 
-    # -----------------------------
-    # Corrected IRB
-    # -----------------------------
-
-    ax2 = plt.subplot(2, 2, 2)
+    ax2 = plt.subplot(
+        2,
+        2,
+        2
+    )
 
     ax2.imshow(
-        irb_after
+        linear_stretch(irb_after)
     )
 
     ax2.set_title(
-        "Dark corrected IRB"
+        "Dark corrected IRB\n(0.5% linear stretch)"
     )
 
-    ax2.axis("off")
-
-
-    # -----------------------------
-    # Spectrum comparison
-    # -----------------------------
-
-    ax3 = plt.subplot(2, 1, 2)
-
-
-    wavelengths = np.array(
-        [
-            873.403381,
-            691.897644,
-            502.560150
-        ]
+    ax2.axis(
+        "off"
     )
+
+
+    ax3 = plt.subplot(
+        2,
+        1,
+        2
+    )
+
+
+    wavelengths = [
+        873.403381,
+        691.897644,
+        502.560150
+    ]
 
 
     for name, location in dark_locations.items():
@@ -834,25 +914,23 @@ def create_dark_correction_qc_report(
 
     plt.tight_layout()
 
+
     base_name = os.path.basename(
         filename
     )
-    
+
+
     base_name = base_name.replace(
         ".tif",
         "_DS_QC.png"
     )
-    
+
+
     output = os.path.join(
         str(qc_directory),
         str(base_name)
-        
     )
 
-    print("DEBUG filename:", filename)
-    print("DEBUG qc_directory:", qc_directory)
-    print("DEBUG output:", output)
-    print("Saving DS QC to:", output)
 
     plt.savefig(
         output,
@@ -862,6 +940,12 @@ def create_dark_correction_qc_report(
 
 
     plt.close()
+
+
+    print(
+        "Saving DS QC to:",
+        output
+    )
 
 
     return output
