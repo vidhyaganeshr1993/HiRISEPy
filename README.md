@@ -1,5 +1,7 @@
 # HiRISEPy: Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21628753.svg)](https://doi.org/10.5281/zenodo.21628753)
+
 ## Overview
 
 This repository provides an open-source Python implementation for processing, dark subtraction correction with quality assessment of NASA Mars Reconnaissance Orbiter (MRO) High Resolution Imaging Science Experiment (HiRISE) Unfiltered multispectral observations.
