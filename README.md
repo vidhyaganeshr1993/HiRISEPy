@@ -310,12 +310,6 @@ FAILED_ERROR
 
 ## Python Environment
 
-The recommended environment is:
-
-```
-python-processing
-```
-
 Required packages include:
 
 - Python 3.x
@@ -336,7 +330,7 @@ Example workflow:
 1. Activate the Python environment:
 
 ```
-python-processing
+conda activate "your-environment-name"
 ```
 
 2. Open the provided Jupyter notebook:
