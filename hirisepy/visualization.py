@@ -492,6 +492,7 @@ def create_dark_pixel_qc_report(
     masked_image,
     dark_locations,
     dark_spectra,
+    dark_qc,
     filename=None,
     qc_directory=None,
     window_size=100
@@ -736,6 +737,26 @@ def create_dark_pixel_qc_report(
                 f"{loc['value']:.6f}"
             ]
         )
+
+
+    qc_text = (
+        f"Dark spectra consistency: {dark_qc['status']}\n"
+        f"Maximum RMSE: {dark_qc['max_rmse']:.6f}\n"
+        f"Relative RMSE: {dark_qc['relative_rmse']*100:.2f}%\n"
+        f"Threshold: {dark_qc['threshold']:.6f}"
+    )
+
+
+    ax4.text(
+        0.5,
+        0.15,
+        qc_text,
+        ha="center",
+        va="center",
+        fontsize=11,
+        transform=ax4.transAxes
+    )
+
 
 
     table = ax4.table(

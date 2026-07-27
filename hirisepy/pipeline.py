@@ -17,6 +17,10 @@ from hirisepy.dark_correction import (
     apply_dark_correction
 )
 
+from hirisepy.quality_control import (
+    validate_dark_spectra
+)
+
 from hirisepy.visualization import (
     make_irb,
     create_dark_pixel_qc_report,
@@ -106,7 +110,25 @@ def process_hirise_file(
         masked_image,
         dark_locations
     )
-    
+ 
+    print("Checking dark spectra consistency...")
+
+
+    dark_qc = validate_dark_spectra(
+        dark_spectra
+    )
+
+
+    print(dark_qc["message"])
+
+
+    if dark_qc["status"] == "FAILED":
+
+        raise ValueError(
+            dark_qc["message"]
+        )
+
+ 
     print("Calculating dark offsets...")
 
 
@@ -141,6 +163,7 @@ def process_hirise_file(
         masked_image,
         dark_locations,
         dark_spectra,
+        dark_qc,
         filename=filename,
         qc_directory=qc_directory
     )
@@ -197,5 +220,6 @@ def process_hirise_file(
         reordered_metadata,
         dark_locations,
         reordered_image,
-        dark_offsets
+        dark_offsets,
+        dark_qc
     )

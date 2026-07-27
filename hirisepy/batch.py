@@ -74,7 +74,7 @@ def process_hirise_folder(
             )
 
 
-            metadata, dark_locations, corrected_image, dark_offsets = process_hirise_file(
+            metadata, dark_locations, corrected_image, dark_offsets, dark_qc = process_hirise_file(
                 filepath,
                 qc_directory,
                 corrected_directory
@@ -84,8 +84,8 @@ def process_hirise_folder(
             results.append(
                 {
                     "filename": os.path.basename(filepath),
-                    "status": "SUCCESS",
-                    "error_message": "",
+                    "status": dark_qc["status"],
+                    "error_message": dark_qc["message"],
 
                     "science_phase": metadata.get(
                         "science_phase",

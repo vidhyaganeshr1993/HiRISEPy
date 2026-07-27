@@ -1,4 +1,4 @@
-# hirisepy: Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data
+# HiRISEPy: Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data
 
 ## Overview
 
@@ -14,7 +14,7 @@ Rangarajan, V.G., Tornabene, L.L., Osinski, G.R., Dundas, C.M., Beyer, R.A., Her
 
 HiRISE COLOR observations provide three-channel visible-near infrared measurements of the Martian surface. However, quantitative spectral analysis requires careful treatment of band and scene-dependent effects due to atmospheric scattering.
 
-hirisepy implements a dark subtraction correction approach designed to mitigate effects of atmospheric scattering using the darkest measurable pixels within each observation. The corrected products preserve the original calibrated radiometric information while improving our estimation of surface spectral behaviour.
+HiRISEPy implements a dark subtraction correction approach designed to mitigate effects of atmospheric scattering using the darkest measurable pixels within each observation. The corrected products preserve the original calibrated radiometric information while improving our estimation of surface spectral behaviour.
 
 The software is intended for users performing quantitative analysis of HiRISE multispectral observations rather than simple image visualization.
 
@@ -24,35 +24,62 @@ The software is intended for users performing quantitative analysis of HiRISE mu
 
 The pipeline provides:
 
-HiRISEpy provides:
-
 ## Data Processing
 
 - Automated ingestion of HiRISE UNFILTERED COLOR observations
 - Metadata extraction from input products
 - Invalid pixel masking
 - Automated dark pixel identification
+- Automated dark pixel spectral validation prior to correction
 - Dark subtraction correction
 - Multispectral band reordering
 - ENVI-compatible output generation
 
 ## Quality Assessment
 
-Generation of diagnostic products including:
+HiRISEPy includes automated quality assessment before and after dark subtraction correction.
+
+Diagnostic products include:
 
 - dark pixel location maps
-- correction validation plots
-- before/after spectral comparisons
-- processing summaries
-- batch failure reports
+- dark minima statistics
+- dark pixel spectral plots
+- before/after correction comparisons
+- automated QC reports
+- batch processing summaries
+
+Before applying dark subtraction, HiRISEPy evaluates the physical validity and spectral consistency of the automatically selected dark pixels.
+
+The QC system includes:
+
+- **Negative minima detection**
+    - Dark subtraction is aborted if any automatically selected minimum spectrum contains negative I/F values.
+
+- **Dark spectrum consistency assessment**
+    - The three independently selected minimum pixels are compared using pairwise spectral RMSE.
+    - If the spectral difference exceeds the defined threshold, a warning is generated.
+    - Warning cases continue processing but are flagged in the batch summary output.
+
 
 ## Batch Processing
 
-The package supports automated processing of large observation inventories by:
+Batch processing automatically:
 
-- processing observations sequentially
-- generating standardized outputs
-- recording processing success/failure status
+- processes each observation sequentially
+- generates QC products
+- exports corrected ENVI products
+- records processing status and QC information
+
+Each observation is processed independently. If an individual observation fails, the failure is recorded and processing continues with subsequent datasets.
+
+The batch summary CSV provides an audit record containing:
+
+- filename
+- processing status
+- QC messages
+- observation metadata
+- automatically selected dark pixel I/F values
+
 ---
 
 # Processing Workflow
@@ -72,23 +99,47 @@ Invalid pixel masking
 Dark pixel identification
         |
         v
-Dark subtraction correction
+Dark spectrum extraction
         |
         v
-Quality control assessment
+Negative minima validation
         |
-        v
-Band re-ordering
-        |
-        v
-ENVI compatible output generation
-```
+        +-----------------------------+
+        |                             |
+        v                             v
+ Negative minima detected        No negative minima
+        |                             |
+        v                             v
+     Abort                 Spectral consistency check
+                                      |
+                                      +----------------------+
+                                      |                      |
+                                      v                      v
+                              RMSE acceptable        RMSE above threshold
+                                      |                      |
+                                      v                      v
+                                  SUCCESS              WARNING
+                                      |                      |
+                                      +-----------+----------+
+                                                  |
+                                                  v
+                                  Dark subtraction correction
+                                                  |
+                                                  v
+                                  QC product generation
+                                                  |
+                                                  v
+                                  Band re-ordering
+                                                  |
+                                                  v
+                                  ENVI output generation
 
+```
 ---
 
 # Supported Input Data
 
-hirisepy currently requires:
+HiRISEPy currently requires:
 
 NASA MRO HiRISE UNFILTERED COLOR products
 ISIS-processed HiRISE Unfiltered cubes converted to TIFF format using GDAL
@@ -213,25 +264,42 @@ Batch processing automatically:
 
 # Quality Control and Failure Handling
 
-The pipeline performs validation checks before applying a dark subtraction correction.
+The pipeline performs validation checks before applying dark subtraction correction.
 
-If physically invalid dark minima values are detected:
+## Dark Pixel Validation
+
+Before correction, the automatically selected dark pixels are evaluated for physical validity and spectral consistency.
+
+### Negative minima check
+
+If any selected dark spectrum contains negative I/F values:
 
 ```
 DS correction not possible - negative minima values
 ```
 
-the observation is rejected and processing continues with subsequent observations.
+the observation is rejected because the selected dark pixels are considered physically invalid for dark subtraction correction.
 
-Failure reasons are recorded in the batch summary CSV.
+Processing continues with subsequent observations during batch processing.
+
+### Dark spectral consistency check
+
+The three independently selected minimum pixels are compared using pairwise spectral RMSE.
+
+If the maximum RMSE exceeds the defined threshold, the observation is flagged:
+
+```
+WARNING: Dark spectra RMSE exceeds threshold. Please verify DS correction results.
+```
+
+Warning cases continue through dark subtraction correction, but the QC status is recorded in the batch summary CSV.
 
 Example statuses:
 
 ```
 SUCCESS
-
+WARNING
 FAILED_DS_NEGATIVE_MINIMA
-
 FAILED_ERROR
 ```
 
@@ -299,14 +367,17 @@ HiRISE_Python/
 │   ├── pipeline.py
 │   ├── batch.py
 │   ├── visualization.py
+│   ├── __init__.py
 │   ├── dark_correction.py
-│   ├── band_stacking.py
+│   ├── dark_pixels.py
+│   ├── io.py
+│   ├── masking.py
+│   ├── metadata.py   
+│   ├── quality_control.py
 │   └── envi_io.py
 │
 ├── notebooks/
 │   └── Run_HiRISE_Processing.ipynb
-│
-├── environment.yml
 │
 ├── README.md
 │
@@ -317,7 +388,7 @@ HiRISE_Python/
 
 # Software Architecture
 
-HiRISEpy is organized into modular Python components, with each module responsible for a specific stage of the processing workflow.
+HiRISEPy is organized into modular Python components, with each module responsible for a specific stage of the processing workflow.
 
 ## Module Description
 
@@ -331,6 +402,7 @@ This module defines the primary HiRISE processing pipeline and coordinates the s
 - Metadata extraction
 - Invalid pixel masking
 - Dark pixel identification
+- Dark spectrum extraction and validation
 - Dark subtraction correction
 - Band reordering
 - Output generation
@@ -391,6 +463,20 @@ Functions include:
 - Recording pixel coordinates and values
 - Providing dark pixel statistics for quality assessment
 
+---
+
+### `quality_control.py`
+
+Dark spectrum validation module.
+
+This module evaluates the physical validity and spectral consistency of automatically selected dark pixels before dark subtraction correction.
+
+Functions include:
+
+- Detecting negative dark spectrum values
+- Calculating pairwise spectral RMSE
+- Assigning SUCCESS, WARNING, or FAILED QC states
+- Providing quality metrics for batch processing summaries
 
 ---
 
@@ -491,12 +577,12 @@ This module provides supporting functions for:
 - Directory management
 - Common processing operations shared across modules
 
-
 ---
+
 
 # Development Philosophy
 
-HiRISEpy follows a modular design where individual processing steps are separated into independent components.
+HiRISEPy follows a modular design where individual processing steps are separated into independent components.
 
 This approach provides:
 
