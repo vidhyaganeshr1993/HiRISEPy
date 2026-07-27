@@ -143,7 +143,6 @@ Negative minima validation
 
 HiRISEPy currently requires:
 
-NASA MRO HiRISE UNFILTERED COLOR products
 ISIS-processed HiRISE Unfiltered cubes converted to TIFF format using GDAL
 
 Example:
