@@ -608,16 +608,8 @@ Rangarajan, V.G., Tornabene, L.L., Osinski, G.R., Dundas, C.M., Beyer, R.A., Her
 
 ---
 
-# License
-
-A license file will be included with this repository.
-
-Please consult the license terms before redistribution or modification.
-
----
-
 # Acknowledgements
 
 This work utilizes data from NASA's Mars Reconnaissance Orbiter High Resolution Imaging Science Experiment (HiRISE).
 
-The authors acknowledge the HiRISE science team and the planetary science community for maintaining publicly available Mars orbital datasets.
+The author acknowledges the HiRISE science team for maintaining publicly available HiRISE datasets.
