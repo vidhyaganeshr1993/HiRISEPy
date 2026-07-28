@@ -1,6 +1,6 @@
 # HiRISEPy: Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21628753.svg)](https://doi.org/10.5281/zenodo.21628753)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21628752.svg)](https://doi.org/10.5281/zenodo.21628752)
 
 ## Overview
 
