@@ -29,6 +29,7 @@ from hirisepy.visualization import (
 
 from hirisepy.band_stacking import reorder_to_bgr_nir
 from hirisepy.envi_io import write_envi_product
+from hirisepy.cub_converter import prepare_hirise_cube
 
 
 def process_hirise_file(
@@ -56,6 +57,28 @@ def process_hirise_file(
         Processing metadata, dark locations,
         corrected image, offsets and QC results
     """
+
+    # --------------------------------------------------
+    # Convert ISIS cube to ENVI-compatible TIFF
+    # --------------------------------------------------
+
+    if filename.lower().endswith(".cub"):
+
+        print("ISIS cube detected.")
+        print("Preparing ENVI-compatible TIFF...")
+
+        filename = prepare_hirise_cube(
+            filename,
+            os.path.dirname(filename)
+        )
+
+        print(
+            "Using converted TIFF:",
+            filename
+        )
+
+
+
 
     print("Reading image...")
 

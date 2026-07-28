@@ -11,12 +11,12 @@ def process_hirise_folder(
     summary_file=None
 ):
     """
-    Process all HiRISE COLOR TIFF files in a folder.
+    Process all HiRISE ISIS cube files in a folder.
 
     Parameters
     ----------
     input_directory : str
-        Folder containing HiRISE TIFF files
+        Folder containing HiRISE ISIS cube files
 
     qc_directory : str
         Folder for QC reports
@@ -28,14 +28,13 @@ def process_hirise_folder(
         CSV summary output
     """
 
-
-    # Find all TIFF files
+    # Find all ISIS cube files
 
     files = []
 
     for filename in os.listdir(input_directory):
 
-        if filename.lower().endswith(".tif"):
+        if filename.lower().endswith(".cub"):
 
             files.append(
                 os.path.join(
@@ -43,6 +42,7 @@ def process_hirise_folder(
                     filename
                 )
             )
+
 
 
     print(

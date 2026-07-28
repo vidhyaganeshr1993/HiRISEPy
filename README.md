@@ -1,12 +1,14 @@
 # HiRISEPy: Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21628753.svg)](https://doi.org/10.5281/zenodo.21628753)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21628752.svg)](https://doi.org/10.5281/zenodo.21628752)
 
 ## Overview
 
 This repository provides an open-source Python implementation for processing, dark subtraction correction with quality assessment of NASA Mars Reconnaissance Orbiter (MRO) High Resolution Imaging Science Experiment (HiRISE) Unfiltered multispectral observations.
 
-The pipeline was developed to enable reproducible and batch processing of HiRISE multispectral datasets for quantitative spectral analysis, particularly for studies requiring accurate characterization of subtle radiometric differences between HiRISE color bands.
+The pipeline was developed to enable reproducible and batch processing of HiRISE multispectral datasets for quantitative spectral analysis, particularly for studies requiring accurate characterization of subtle radiometric differences between HiRISE color bands. 
+
+HiRISEPy supports direct ingestion of ISIS-processed HiRISE Unfiltered COLOR cube products (.cub). ISIS cubes are automatically converted into ENVI-compatible intermediate products prior to processing, enabling a complete workflow from native planetary data products to dark-subtraction corrected science products.
 
 The processing methodology, including detailed descriptions of the dark subtraction methodology, validation procedures, and scientific application are described in:
 
@@ -29,6 +31,8 @@ The pipeline provides:
 ## Data Processing
 
 - Automated ingestion of HiRISE UNFILTERED COLOR observations
+- Direct support for ISIS-processed HiRISE cube products (.cub)
+- Automatic conversion of ISIS cubes into ENVI-compatible intermediate products
 - Metadata extraction from input products
 - Invalid pixel masking
 - Automated dark pixel identification
@@ -141,15 +145,14 @@ Negative minima validation
 
 # Supported Input Data
 
-HiRISEPy currently requires:
+HiRISEPy now supports direct processing of ISIS-processed HiRISE Unfiltered COLOR cube products.
 
-ISIS-processed HiRISE Unfiltered cubes converted to TIFF format using GDAL
+Supported input formats:
 
-Example:
+- ISIS cube products (`.cub`)
+- ENVI-compatible TIFF products (`.tif`)
 
-ESP_053039_1640_UNFILTERED_COLOR4.tif
-
-The procedure for generating ISIS UNFILTERED products and converting them to TIFF format is described in the supplementary material of Rangarajan et al. (2024).
+The Unfiltered ISIS .cub products are available to the HiRISE science team (through HiReport) or can alternatively be generated using methods described in the supplementary material of Rangarajan et al. (2024).
 
 ## Native HiRISE products detector band ordering:
 
@@ -249,10 +252,11 @@ Example input directory:
 ```
 input/
 
-ESP_053039_1640_UNFILTERED_COLOR4.tif
-ESP_053040_1640_UNFILTERED_COLOR5.tif
-ESP_053041_1640_UNFILTERED_COLOR4.tif
+ESP_053039_1640_UNFILTERED_COLOR4.cub
+ESP_053040_1640_UNFILTERED_COLOR5.cub
+ESP_053041_1640_UNFILTERED_COLOR4.cub
 ```
+The same directory may also contain prepared ENVI-compatible TIFF inputs.
 
 Batch processing automatically:
 
@@ -323,6 +327,7 @@ Required packages include:
 - tifffile
 - spectral
 - pillow
+- gdal
 
 ---
 
@@ -365,6 +370,7 @@ HiRISE_Python/
 
 ├── hirisepy/
 │   ├── pipeline.py
+│   ├── cub_converter.py
 │   ├── batch.py
 │   ├── visualization.py
 │   ├── __init__.py
@@ -410,6 +416,23 @@ This module defines the primary HiRISE processing pipeline and coordinates the s
 
 The pipeline module provides the main interface for processing individual HiRISE observations.
 
+---
+
+### `cub_converter.py`
+
+ISIS cube preparation module.
+
+This module enables direct ingestion of ISIS-processed HiRISE COLOR cube products.
+
+Functions include:
+
+- Converting ISIS `.cub` products into ENVI-compatible TIFF format
+- Updating ENVI header metadata
+- Adding wavelength information
+- Defining NoData values
+- Preparing products for direct ingestion by the HiRISEPy processing pipeline
+
+This module removes the requirement for users to manually convert ISIS cubes prior to processing.
 
 ---
 
@@ -595,6 +618,19 @@ This approach provides:
 
 # Version History
 
+## v0.1.3
+
+Released: 2026-07-28
+
+Changes:
+
+- Added direct ISIS cube (`.cub`) ingestion support.
+- Added automated GDAL-based ISIS cube conversion.
+- Added automatic ENVI-compatible header preparation.
+- Added automatic wavelength and NoData metadata handling.
+- Integrated cube preparation into the batch processing workflow.
+- Tested processing workflow across Windows and macOS environments.
+
 ## v0.1.2
 
 Released: 2026-07-28
@@ -631,7 +667,7 @@ Features:
 If you use this software or methodology in scientific work, please cite:
 
 Software: 
-Rangarajan, V.G. (2026). HiRISEPy: A Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data. Zenodo. https://doi.org/10.5281/zenodo.21628753. 
+Rangarajan, V.G. (2026). HiRISEPy: A Python-Based Processing Pipeline for NASA MRO HiRISE Unfiltered Multispectral Data. Zenodo. https://doi.org/10.5281/zenodo.21628752. 
 
 Methodology: 
 Rangarajan, V.G., Tornabene, L.L., Osinski, G.R., Dundas, C.M., Beyer, R.A., Herkenhoff, K.E., Byrne, S., Heyd, R., Seelos, F.P., Munaretto, G., Dapremont, A., (2024). Novel quantitative methods to enable multispectral identification of high-purity water ice exposures on Mars using High Resolution Imaging Science Experiment (HiRISE) images. Icarus, 419, 115849. https://doi.org/10.1016/j.icarus.2023.115849
