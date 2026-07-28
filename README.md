@@ -143,7 +143,6 @@ Negative minima validation
 
 HiRISEPy currently requires:
 
-NASA MRO HiRISE UNFILTERED COLOR products
 ISIS-processed HiRISE Unfiltered cubes converted to TIFF format using GDAL
 
 Example:
@@ -316,12 +315,6 @@ QC results are reported as one of the following:
 
 ## Python Environment
 
-The recommended environment is:
-
-```
-python-processing
-```
-
 Required packages include:
 
 - Python 3.x
@@ -342,7 +335,7 @@ Example workflow:
 1. Activate the Python environment:
 
 ```
-python-processing
+conda activate "your-environment-name"
 ```
 
 2. Open the provided Jupyter notebook:
