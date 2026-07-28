@@ -58,7 +58,7 @@ The QC system includes:
     - Dark subtraction is aborted if any automatically selected minimum spectrum contains negative I/F values.
 
 - **Dark spectrum consistency assessment**
-    - The three independently selected minimum pixels are compared using pairwise spectral RMSE.
+    - The three independently selected minimum pixels are compared using maximum pairwise absolute RMSE and maximum pairwise relative RMSE.
     - If the spectral difference exceeds the defined threshold, a warning is generated.
     - Warning cases continue processing but are flagged in the batch summary output.
 
@@ -286,24 +286,29 @@ Processing continues with subsequent observations during batch processing.
 
 ### Dark spectral consistency check
 
-The three independently selected minimum pixels are compared using pairwise spectral RMSE.
+The three independently selected minimum pixels are compared using:
 
-If the maximum RMSE exceeds the defined threshold, the observation is flagged:
+- Maximum pairwise absolute RMSE
+- Maximum pairwise relative RMSE
 
-```
-WARNING: Dark spectra RMSE exceeds threshold. Please verify DS correction results.
-```
+Both metrics are reported because they provide complementary information:
 
-Warning cases continue through dark subtraction correction, but the QC status is recorded in the batch summary CSV.
+- Absolute RMSE evaluates differences in measured I/F values.
+- Relative RMSE evaluates spectral differences (in %) relative to signal magnitude.
 
-Example statuses:
+The default QC thresholds are:
 
-```
-SUCCESS
-WARNING
-FAILED_DS_NEGATIVE_MINIMA
-FAILED_ERROR
-```
+
+Absolute RMSE threshold: 0.005 I/F
+Relative RMSE threshold: 5%
+
+If the maximum RMSE exceeds the defined threshold, the observation is flagged with a warning. 
+
+QC results are reported as one of the following:
+
+- SUCCESS — dark spectra are consistent
+- WARNING — spectral differences exceed QC thresholds and require inspection
+- FAILED — correction cannot proceed safely
 
 ---
 
@@ -595,6 +600,38 @@ This approach provides:
 
 ---
 
+# Version History
+
+## v0.1.2
+
+Released: 2026-07-28
+
+Changes:
+
+- Added relative RMSE validation for dark spectrum consistency assessment.
+- Added combined absolute RMSE and relative RMSE QC thresholds.
+- Improved dark pixel QC reporting.
+- Added reporting of:
+  - maximum pairwise RMSE
+  - maximum pairwise relative RMSE
+  - QC threshold values
+- Improved QC visualization layout for easier interpretation.
+- Tested workflow on multiple HiRISE COLOR observations.
+
+---
+
+## v0.1.1
+
+Initial public release.
+
+Features:
+
+- Automated HiRISE dark pixel extraction workflow.
+- Dark spectrum correction pipeline.
+- Jupyter-based processing workflow.
+- QC visualization products.
+
+---
 
 # Citation
 

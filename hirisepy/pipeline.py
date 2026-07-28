@@ -47,15 +47,17 @@ def process_hirise_file(
     qc_directory : str
         Folder for QC outputs
 
+    output_directory : str
+        Folder for processed ENVI output
+
     Returns
     -------
-    metadata
-    dark_locations
+    tuple
+        Processing metadata, dark locations,
+        corrected image, offsets and QC results
     """
 
-
     print("Reading image...")
-
 
     image, metadata = read_hirise_color_image(
         filename
@@ -64,12 +66,10 @@ def process_hirise_file(
 
     print("Creating mask...")
 
-
     mask = create_common_mask(
         image,
         metadata["nodata"]
     )
-
 
     masked_image = apply_common_mask(
         image,
@@ -79,19 +79,18 @@ def process_hirise_file(
 
     print("Creating IRB...")
 
-
     irb = make_irb(
         masked_image
     )
-    
+
 
     print("Finding dark pixels...")
-
 
     dark_locations = find_dark_pixels(
         masked_image
     )
-    
+
+
     # Check for negative minima values
 
     for band_name, values in dark_locations.items():
@@ -99,23 +98,34 @@ def process_hirise_file(
         if values["value"] < 0:
 
             raise ValueError(
-            "DS correction not possible - negative minima values"
+                "DS correction not possible - "
+                "negative minima values detected"
             )
 
 
     print("Extracting spectra...")
 
-
     dark_spectra = extract_dark_spectra(
         masked_image,
         dark_locations
     )
- 
+
+
     print("Checking dark spectra consistency...")
 
 
+    # Spectral consistency QC
+    #
+    # Absolute RMSE:
+    #     Maximum allowed difference between dark spectra
+    #
+    # Relative RMSE:
+    #     Maximum allowed difference relative to signal level
+    #
     dark_qc = validate_dark_spectra(
-        dark_spectra
+        dark_spectra,
+        threshold=0.005,
+        relative_threshold=0.05
     )
 
 
@@ -128,12 +138,12 @@ def process_hirise_file(
             dark_qc["message"]
         )
 
- 
+
     print("Calculating dark offsets...")
 
 
     dark_offsets = calculate_dark_offsets(
-    dark_locations
+        dark_locations
     )
 
 
@@ -144,15 +154,14 @@ def process_hirise_file(
         masked_image,
         dark_offsets
     )
-    
+
+
     print("Creating corrected IRB...")
+
+
     irb_corrected = make_irb(
         corrected_image
     )
-    
-    
-    
-    
 
 
     print("Creating QC report...")
@@ -167,9 +176,8 @@ def process_hirise_file(
         filename=filename,
         qc_directory=qc_directory
     )
-    
-    print("QC directory is:", qc_directory)
-    
+
+
     create_dark_correction_qc_report(
         irb,
         irb_corrected,
@@ -183,16 +191,20 @@ def process_hirise_file(
 
     print("Reordering bands...")
 
+
     reordered_image, reordered_metadata = reorder_to_bgr_nir(
         corrected_image,
         metadata
     )
-    
+
+
     print("Reordered metadata:")
     print(reordered_metadata["band_names"])
     print(reordered_metadata["wavelengths"])
-    
+
+
     print("Writing ENVI product...")
+
 
     base_name = os.path.splitext(
         os.path.basename(filename)
@@ -211,8 +223,8 @@ def process_hirise_file(
         output_directory,
         output_name
     )
-    
-    
+
+
     print("Processing complete!")
 
 

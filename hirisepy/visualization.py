@@ -481,8 +481,6 @@ def plot_dark_pixel_zoom_irb(
 
         plt.show()
 
-
-
 # ============================================================
 # Dark pixel QC report
 # ============================================================
@@ -506,7 +504,8 @@ def create_dark_pixel_qc_report(
     - Dark pixel locations
     - ROI zooms
     - Dark pixel spectra
-    - Summary table
+    - Dark pixel summary table
+    - Spectral consistency QC information
 
     All image panels use 0.5% linear stretch.
     """
@@ -550,7 +549,7 @@ def create_dark_pixel_qc_report(
 
 
     fig = plt.figure(
-        figsize=(15,14)
+        figsize=(16,16)
     )
 
 
@@ -559,16 +558,14 @@ def create_dark_pixel_qc_report(
     # -----------------------------
 
     ax1 = plt.subplot2grid(
-        (4,3),
+        (5,3),
         (0,0),
         colspan=3
     )
 
 
     ax1.imshow(
-        linear_stretch(
-            irb
-        )
+        linear_stretch(irb)
     )
 
 
@@ -591,9 +588,7 @@ def create_dark_pixel_qc_report(
 
     ax1.legend()
 
-    ax1.axis(
-        "off"
-    )
+    ax1.axis("off")
 
 
     # -----------------------------
@@ -605,14 +600,13 @@ def create_dark_pixel_qc_report(
     ):
 
         ax = plt.subplot2grid(
-            (4,3),
+            (5,3),
             (1,i)
         )
 
 
         row = loc["row"]
         col = loc["col"]
-
 
         half = window_size // 2
 
@@ -627,14 +621,13 @@ def create_dark_pixel_qc_report(
 
 
         ax.imshow(
-            linear_stretch(
-                crop
-            )
+            linear_stretch(crop)
         )
 
-        # Position of dark pixel inside the cropped image
-        marker_row = row - max(row-half, 0)
-        marker_col = col - max(col-half, 0)
+
+        marker_row = row - max(row-half,0)
+        marker_col = col - max(col-half,0)
+
 
         ax.scatter(
             marker_col,
@@ -645,15 +638,14 @@ def create_dark_pixel_qc_report(
             c=colors[band_name]
         )
 
+
         ax.set_title(
             labels[band_name] +
             "\n(0.5% linear stretch)"
         )
 
 
-        ax.axis(
-            "off"
-        )
+        ax.axis("off")
 
 
     # -----------------------------
@@ -661,7 +653,7 @@ def create_dark_pixel_qc_report(
     # -----------------------------
 
     ax3 = plt.subplot2grid(
-        (4,3),
+        (5,3),
         (2,0),
         colspan=3
     )
@@ -710,19 +702,29 @@ def create_dark_pixel_qc_report(
 
 
     # -----------------------------
-    # Summary table
+    # Bottom QC section
     # -----------------------------
 
     ax4 = plt.subplot2grid(
-        (4,3),
+        (5,3),
         (3,0),
         colspan=3
     )
 
-    ax4.axis(
-        "off"
+
+    ax4.axis("off")
+
+
+    ax4.set_title(
+        "Dark Pixel Quality Control Summary",
+        fontsize=12,
+        pad=10
     )
 
+
+    # -----------------------------
+    # Pixel table
+    # -----------------------------
 
     table_data = []
 
@@ -739,26 +741,6 @@ def create_dark_pixel_qc_report(
         )
 
 
-    qc_text = (
-        f"Dark spectra consistency: {dark_qc['status']}\n"
-        f"Maximum RMSE: {dark_qc['max_rmse']:.6f}\n"
-        f"Relative RMSE: {dark_qc['relative_rmse']*100:.2f}%\n"
-        f"Threshold: {dark_qc['threshold']:.6f}"
-    )
-
-
-    ax4.text(
-        0.5,
-        0.15,
-        qc_text,
-        ha="center",
-        va="center",
-        fontsize=11,
-        transform=ax4.transAxes
-    )
-
-
-
     table = ax4.table(
         cellText=table_data,
         colLabels=[
@@ -767,8 +749,13 @@ def create_dark_pixel_qc_report(
             "Column",
             "I/F"
         ],
-        loc="center",
-        cellLoc="center"
+        cellLoc="center",
+        bbox=[
+            0.02,
+            0.20,
+            0.45,
+            0.55
+        ]
     )
 
 
@@ -776,13 +763,40 @@ def create_dark_pixel_qc_report(
 
     table.set_fontsize(10)
 
-    table.scale(
-        1,
-        1.5
+
+
+    # -----------------------------
+    # QC statistics
+    # -----------------------------
+
+    qc_text = (
+        f"Status: {dark_qc['status']}\n\n"
+        f"Maximum pairwise absolute RMSE:\n"
+        f"{dark_qc['max_rmse']:.6f} I/F\n\n"
+        f"Maximum pairwise relative RMSE:\n"
+        f"{dark_qc['max_relative_rmse']*100:.2f}%\n\n"
+        f"QC thresholds:\n"
+        f"Absolute RMSE limit: "
+        f"{dark_qc['absolute_threshold']:.6f} I/F\n"
+        f"Relative RMSE limit: "
+        f"{dark_qc['relative_threshold']*100:.1f}%"
     )
 
 
-    plt.tight_layout()
+    ax4.text(
+        0.75,
+        0.5,
+        qc_text,
+        ha="center",
+        va="center",
+        fontsize=11,
+        transform=ax4.transAxes
+    )
+
+
+    plt.tight_layout(
+        rect=[0,0,1,0.97]
+    )
 
 
     if save_path is not None:
@@ -799,6 +813,7 @@ def create_dark_pixel_qc_report(
 
 
     plt.show()
+
 
 
 
